@@ -16,6 +16,7 @@
                 <th>コラボ内容</th>
                 <th>インフルエンサー</th>
                 <th>期間</th>
+                <th>投稿形式</th>
                 <th>報酬</th>
                 <th>投稿URL</th>
                 <th>ステータス</th>
@@ -25,17 +26,21 @@
         <tbody>
         {% for c in collabs %}
             <tr>
-                <td><strong>{{ c.title }}</strong></td>
+                <td>
+                    <strong>{{ c.title }}</strong>
+                    {% if c.description %}<br><small class="text-muted">{{ c.description[:50] }}</small>{% endif %}
+                </td>
                 <td>
                     {{ c.influencer_name }}
                     <span class="badge platform-{{ c.platform | lower }}">{{ c.platform }}</span>
                 </td>
                 <td class="text-nowrap">{{ c.start_date or '?' }} ～ {{ c.end_date or '?' }}</td>
+                <td>{{ c.post_type or '-' }}</td>
                 <td>{{ c.compensation_type }}{% if c.compensation_amount %}<br><small class="text-muted">{{ c.compensation_amount }}</small>{% endif %}</td>
                 <td>
                     {% if c.post_url %}
                     <a href="{{ c.post_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-link-45deg"></i> 投稿
+                        <i class="bi bi-link-45deg"></i>
                     </a>
                     {% else %}-{% endif %}
                 </td>
@@ -54,7 +59,7 @@
 
             <!-- 編集モーダル -->
             <div class="modal fade" id="editCollab{{ c.id }}" tabindex="-1">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <form method="post" action="{{ url_for('collaboration_update', id=c.id) }}">
                             <div class="modal-header">
@@ -65,6 +70,10 @@
                                 <div class="mb-3">
                                     <label class="form-label">コラボ内容</label>
                                     <input type="text" name="title" class="form-control" value="{{ c.title }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">詳細説明</label>
+                                    <textarea name="description" class="form-control" rows="2">{{ c.description or '' }}</textarea>
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col-md-6">
@@ -77,31 +86,46 @@
                                     </div>
                                 </div>
                                 <div class="row mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <label class="form-label">報酬タイプ</label>
                                         <select name="compensation_type" class="form-select">
-                                            <option value="">選択してください</option>
+                                            <option value="">選択</option>
                                             {% for ct in compensation_types %}
                                             <option value="{{ ct }}" {% if c.compensation_type == ct %}selected{% endif %}>{{ ct }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <label class="form-label">報酬詳細</label>
                                         <input type="text" name="compensation_amount" class="form-control" value="{{ c.compensation_amount or '' }}">
                                     </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">投稿形式</label>
+                                        <select name="post_type" class="form-select">
+                                            <option value="">選択</option>
+                                            {% for pt in post_types %}
+                                            <option value="{{ pt }}" {% if c.post_type == pt %}selected{% endif %}>{{ pt }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">投稿URL</label>
-                                    <input type="url" name="post_url" class="form-control" value="{{ c.post_url or '' }}">
+                                    <label class="form-label">納品物・条件</label>
+                                    <textarea name="deliverables" class="form-control" rows="2" placeholder="例: フィード投稿1枚 + ストーリーズ3枚">{{ c.deliverables or '' }}</textarea>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">ステータス</label>
-                                    <select name="status" class="form-select">
-                                        {% for s in collab_statuses %}
-                                        <option value="{{ s }}" {% if c.status == s %}selected{% endif %}>{{ s }}</option>
-                                        {% endfor %}
-                                    </select>
+                                <div class="row mb-3">
+                                    <div class="col-md-8">
+                                        <label class="form-label">投稿URL</label>
+                                        <input type="url" name="post_url" class="form-control" value="{{ c.post_url or '' }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">ステータス</label>
+                                        <select name="status" class="form-select">
+                                            {% for s in collab_statuses %}
+                                            <option value="{{ s }}" {% if c.status == s %}selected{% endif %}>{{ s }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -112,7 +136,7 @@
                 </div>
             </div>
         {% else %}
-            <tr><td colspan="7" class="text-center text-muted">コラボレーションがありません</td></tr>
+            <tr><td colspan="8" class="text-center text-muted">コラボレーションがありません</td></tr>
         {% endfor %}
         </tbody>
     </table>
@@ -120,7 +144,7 @@
 
 <!-- 新規追加モーダル -->
 <div class="modal fade" id="addCollabModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form method="post" action="{{ url_for('collaboration_add') }}">
                 <div class="modal-header">
@@ -128,19 +152,25 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">インフルエンサー <span class="text-danger">*</span></label>
-                        <select name="influencer_id" class="form-select" required>
-                            <option value="">選択してください</option>
-                            {% for inf in influencers %}
-                            <option value="{{ inf.id }}">{{ inf.name }}（{{ inf.platform }}）</option>
-                            {% endfor %}
-                        </select>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">インフルエンサー <span class="text-danger">*</span></label>
+                            <select name="influencer_id" class="form-select" required>
+                                <option value="">選択してください</option>
+                                {% for inf in influencers %}
+                                <option value="{{ inf.id }}">{{ inf.name }}（{{ inf.platform }}）</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">コラボ内容 <span class="text-danger">*</span></label>
+                            <input type="text" name="title" class="form-control"
+                                   placeholder="例：脂肪冷却体験＋Instagram投稿" required>
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">コラボ内容 <span class="text-danger">*</span></label>
-                        <input type="text" name="title" class="form-control"
-                               placeholder="例：脂肪冷却体験＋Instagram投稿" required>
+                        <label class="form-label">詳細説明</label>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -153,7 +183,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">報酬タイプ</label>
                             <select name="compensation_type" class="form-select">
                                 <option value="">選択してください</option>
@@ -162,23 +192,38 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">報酬詳細</label>
                             <input type="text" name="compensation_amount" class="form-control"
-                                   placeholder="例：脂肪冷却1回分（¥30,000相当）">
+                                   placeholder="例：脂肪冷却1回分">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">投稿形式</label>
+                            <select name="post_type" class="form-select">
+                                <option value="">選択してください</option>
+                                {% for pt in post_types %}
+                                <option value="{{ pt }}">{{ pt }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">投稿URL</label>
-                        <input type="url" name="post_url" class="form-control" placeholder="https://...">
+                        <label class="form-label">納品物・条件</label>
+                        <textarea name="deliverables" class="form-control" rows="2" placeholder="例: フィード投稿1枚 + ストーリーズ3枚、#CoolLabo タグ必須"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">ステータス</label>
-                        <select name="status" class="form-select">
-                            {% for s in collab_statuses %}
-                            <option value="{{ s }}">{{ s }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">投稿URL</label>
+                            <input type="url" name="post_url" class="form-control" placeholder="https://...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ステータス</label>
+                            <select name="status" class="form-select">
+                                {% for s in collab_statuses %}
+                                <option value="{{ s }}">{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

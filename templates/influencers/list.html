@@ -16,9 +16,9 @@
 
 <!-- フィルター -->
 <form method="get" class="row g-2 mb-3">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <input type="text" name="search" class="form-control form-control-sm"
-               placeholder="名前・アカウントで検索" value="{{ search }}">
+               placeholder="名前・アカウント・タグ" value="{{ search }}">
     </div>
     <div class="col-md-2">
         <select name="platform" class="form-select form-select-sm">
@@ -36,11 +36,26 @@
             {% endfor %}
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-1">
         <select name="status" class="form-select form-select-sm">
-            <option value="">全ステータス</option>
+            <option value="">全状態</option>
             {% for s in statuses %}
             <option value="{{ s }}" {% if sel_status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-1">
+        <select name="is_paid" class="form-select form-select-sm">
+            <option value="">有料/無料</option>
+            <option value="1" {% if sel_is_paid == '1' %}selected{% endif %}>有料</option>
+            <option value="0" {% if sel_is_paid == '0' %}selected{% endif %}>無料</option>
+        </select>
+    </div>
+    <div class="col-md-1">
+        <select name="priority" class="form-select form-select-sm">
+            <option value="">優先度</option>
+            {% for pr in priorities %}
+            <option value="{{ pr }}" {% if sel_priority == pr %}selected{% endif %}>{{ pr }}</option>
             {% endfor %}
         </select>
     </div>
@@ -54,10 +69,13 @@
         <thead class="table-light">
             <tr>
                 <th>名前</th>
-                <th>プラットフォーム</th>
-                <th>フォロワー数</th>
+                <th>PF</th>
+                <th>フォロワー</th>
+                <th>ER%</th>
                 <th>ジャンル</th>
                 <th>エリア</th>
+                <th>有料/無料</th>
+                <th>優先度</th>
                 <th>ステータス</th>
                 <th>更新日</th>
             </tr>
@@ -70,13 +88,24 @@
                     <span class="badge platform-{{ inf.platform | lower }}">{{ inf.platform }}</span>
                 </td>
                 <td>{{ "{:,}".format(inf.follower_count) if inf.follower_count else '-' }}</td>
+                <td>{{ "%.1f"|format(inf.engagement_rate) if inf.engagement_rate else '-' }}</td>
                 <td>{{ inf.genre or '-' }}</td>
                 <td>{{ inf.area or '-' }}</td>
+                <td>
+                    {% if inf.is_paid %}
+                    <span class="badge bg-warning text-dark">有料</span>
+                    {% else %}
+                    <span class="badge bg-light text-dark">無料</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge priority-{{ inf.priority }}">{{ inf.priority }}</span>
+                </td>
                 <td><span class="badge status-{{ inf.status }}">{{ inf.status }}</span></td>
                 <td>{{ inf.updated_at[:10] if inf.updated_at else '-' }}</td>
             </tr>
         {% else %}
-            <tr><td colspan="7" class="text-center text-muted">データがありません</td></tr>
+            <tr><td colspan="10" class="text-center text-muted">データがありません</td></tr>
         {% endfor %}
         </tbody>
     </table>
@@ -94,7 +123,9 @@
                 </div>
                 <div class="modal-body">
                     <p class="small text-muted">
-                        CSVヘッダー: name, platform, account_id, follower_count, genre, area, contact_info, notes, status
+                        CSVヘッダー: name, platform, account_id, follower_count, engagement_rate,
+                        genre, sub_genre, area, age_group, gender, contact_info, email, phone,
+                        website_url, is_paid, priority, notes, tags, source, status
                     </p>
                     <input type="file" name="csv_file" accept=".csv" class="form-control" required>
                 </div>

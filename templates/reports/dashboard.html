@@ -43,7 +43,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>インフルエンサー</th>
-                        <th>プラットフォーム</th>
+                        <th>PF</th>
                         <th>コラボ数</th>
                         <th>総閲覧数</th>
                         <th>総いいね</th>
@@ -81,11 +81,14 @@
                         <th>測定日</th>
                         <th>コラボ</th>
                         <th>インフルエンサー</th>
-                        <th>閲覧数</th>
+                        <th>閲覧</th>
                         <th>いいね</th>
                         <th>コメント</th>
-                        <th>新規フォロワー</th>
-                        <th>新規来店</th>
+                        <th>シェア</th>
+                        <th>保存</th>
+                        <th>新規FW</th>
+                        <th>来店</th>
+                        <th>クーポン</th>
                         <th>売上影響</th>
                         <th>操作</th>
                     </tr>
@@ -99,8 +102,11 @@
                         <td>{{ "{:,}".format(r.views) }}</td>
                         <td>{{ "{:,}".format(r.likes) }}</td>
                         <td>{{ "{:,}".format(r.comments) }}</td>
+                        <td>{{ "{:,}".format(r.shares) }}</td>
+                        <td>{{ "{:,}".format(r.saves) }}</td>
                         <td>{{ "{:,}".format(r.new_followers) }}</td>
                         <td>{{ r.new_customers }}</td>
+                        <td>{{ r.coupon_uses }}</td>
                         <td>&yen;{{ "{:,}".format(r.revenue_impact) }}</td>
                         <td>
                             <form method="post" action="{{ url_for('report_delete', id=r.id) }}"
@@ -110,7 +116,7 @@
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="10" class="text-center text-muted">データがありません</td></tr>
+                    <tr><td colspan="13" class="text-center text-muted">データがありません</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -120,7 +126,7 @@
 
 <!-- 測定データ追加モーダル -->
 <div class="modal fade" id="addResultModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form method="post" action="{{ url_for('report_add') }}">
                 <div class="modal-header">
@@ -128,19 +134,22 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">コラボレーション <span class="text-danger">*</span></label>
-                        <select name="collaboration_id" class="form-select" required>
-                            <option value="">選択してください</option>
-                            {% for c in collabs %}
-                            <option value="{{ c.id }}">{{ c.title }}（{{ c.influencer_name }}）</option>
-                            {% endfor %}
-                        </select>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">コラボレーション <span class="text-danger">*</span></label>
+                            <select name="collaboration_id" class="form-select" required>
+                                <option value="">選択してください</option>
+                                {% for c in collabs %}
+                                <option value="{{ c.id }}">{{ c.title }}（{{ c.influencer_name }}）</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">測定日</label>
+                            <input type="date" name="measured_at" class="form-control">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">測定日</label>
-                        <input type="date" name="measured_at" class="form-control">
-                    </div>
+                    <h6 class="text-muted">SNS指標</h6>
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">閲覧数</label>
@@ -157,17 +166,36 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-4">
+                            <label class="form-label">シェア数</label>
+                            <input type="number" name="shares" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">保存数</label>
+                            <input type="number" name="saves" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label">新規フォロワー</label>
                             <input type="number" name="new_followers" class="form-control" value="0">
                         </div>
+                    </div>
+                    <h6 class="text-muted">ビジネス成果</h6>
+                    <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">新規来店数</label>
                             <input type="number" name="new_customers" class="form-control" value="0">
                         </div>
                         <div class="col-md-4">
+                            <label class="form-label">クーポン利用数</label>
+                            <input type="number" name="coupon_uses" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label">売上影響（円）</label>
                             <input type="number" name="revenue_impact" class="form-control" value="0">
                         </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">メモ</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="補足情報"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

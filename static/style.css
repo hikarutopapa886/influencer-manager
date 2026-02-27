@@ -30,6 +30,8 @@ body {
 .badge.platform-youtube { background-color: #FF0000; }
 .badge.platform-tiktok { background-color: #000000; }
 .badge.platform-x { background-color: #1DA1F2; }
+.badge.platform-ブログ { background-color: #FF6600; }
+.badge.platform-line { background-color: #06C755; }
 
 /* ステータスバッジ */
 .badge.status-未連絡 { background-color: #6c757d; }
@@ -38,6 +40,11 @@ body {
 .badge.status-コラボ決定 { background-color: #198754; }
 .badge.status-完了 { background-color: #20c997; }
 .badge.status-見送り { background-color: #adb5bd; }
+
+/* 優先度バッジ */
+.badge.priority-高 { background-color: #dc3545; }
+.badge.priority-中 { background-color: #ffc107; color: #333; }
+.badge.priority-低 { background-color: #e0e0e0; color: #666; }
 
 .table th {
     font-weight: 600;
