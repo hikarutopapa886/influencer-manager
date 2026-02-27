@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}コラボ管理 - CoolLabo{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-handshake"></i> コラボレーション管理</h2>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCollabModal">
+        <i class="bi bi-plus-lg"></i> コラボ登録
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>コラボ内容</th>
+                <th>インフルエンサー</th>
+                <th>期間</th>
+                <th>報酬</th>
+                <th>投稿URL</th>
+                <th>ステータス</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for c in collabs %}
+            <tr>
+                <td><strong>{{ c.title }}</strong></td>
+                <td>
+                    {{ c.influencer_name }}
+                    <span class="badge platform-{{ c.platform | lower }}">{{ c.platform }}</span>
+                </td>
+                <td class="text-nowrap">{{ c.start_date or '?' }} ～ {{ c.end_date or '?' }}</td>
+                <td>{{ c.compensation_type }}{% if c.compensation_amount %}<br><small class="text-muted">{{ c.compensation_amount }}</small>{% endif %}</td>
+                <td>
+                    {% if c.post_url %}
+                    <a href="{{ c.post_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-link-45deg"></i> 投稿
+                    </a>
+                    {% else %}-{% endif %}
+                </td>
+                <td><span class="badge bg-{% if c.status == '進行中' %}primary{% elif c.status == '完了' %}success{% else %}secondary{% endif %}">{{ c.status }}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal" data-bs-target="#editCollab{{ c.id }}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <form method="post" action="{{ url_for('collaboration_delete', id=c.id) }}"
+                          class="d-inline" onsubmit="return confirm('削除しますか？')">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+
+            <!-- 編集モーダル -->
+            <div class="modal fade" id="editCollab{{ c.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post" action="{{ url_for('collaboration_update', id=c.id) }}">
+                            <div class="modal-header">
+                                <h5 class="modal-title">コラボ編集</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">コラボ内容</label>
+                                    <input type="text" name="title" class="form-control" value="{{ c.title }}" required>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">開始日</label>
+                                        <input type="date" name="start_date" class="form-control" value="{{ c.start_date or '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">終了日</label>
+                                        <input type="date" name="end_date" class="form-control" value="{{ c.end_date or '' }}">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">報酬タイプ</label>
+                                        <select name="compensation_type" class="form-select">
+                                            <option value="">選択してください</option>
+                                            {% for ct in compensation_types %}
+                                            <option value="{{ ct }}" {% if c.compensation_type == ct %}selected{% endif %}>{{ ct }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">報酬詳細</label>
+                                        <input type="text" name="compensation_amount" class="form-control" value="{{ c.compensation_amount or '' }}">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">投稿URL</label>
+                                    <input type="url" name="post_url" class="form-control" value="{{ c.post_url or '' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">ステータス</label>
+                                    <select name="status" class="form-select">
+                                        {% for s in collab_statuses %}
+                                        <option value="{{ s }}" {% if c.status == s %}selected{% endif %}>{{ s }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">更新</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <tr><td colspan="7" class="text-center text-muted">コラボレーションがありません</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 新規追加モーダル -->
+<div class="modal fade" id="addCollabModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('collaboration_add') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">コラボレーション登録</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">インフルエンサー <span class="text-danger">*</span></label>
+                        <select name="influencer_id" class="form-select" required>
+                            <option value="">選択してください</option>
+                            {% for inf in influencers %}
+                            <option value="{{ inf.id }}">{{ inf.name }}（{{ inf.platform }}）</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">コラボ内容 <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control"
+                               placeholder="例：脂肪冷却体験＋Instagram投稿" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">開始日</label>
+                            <input type="date" name="start_date" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">終了日</label>
+                            <input type="date" name="end_date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">報酬タイプ</label>
+                            <select name="compensation_type" class="form-select">
+                                <option value="">選択してください</option>
+                                {% for ct in compensation_types %}
+                                <option value="{{ ct }}">{{ ct }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">報酬詳細</label>
+                            <input type="text" name="compensation_amount" class="form-control"
+                                   placeholder="例：脂肪冷却1回分（¥30,000相当）">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">投稿URL</label>
+                        <input type="url" name="post_url" class="form-control" placeholder="https://...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ステータス</label>
+                        <select name="status" class="form-select">
+                            {% for s in collab_statuses %}
+                            <option value="{{ s }}">{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">登録</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

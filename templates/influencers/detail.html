@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ influencer.name }} - CoolLabo{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('influencer_list') }}">インフルエンサー一覧</a></li>
+        <li class="breadcrumb-item active">{{ influencer.name }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-person"></i> プロフィール</span>
+                <div>
+                    <a href="{{ url_for('influencer_edit', id=influencer.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i> 編集
+                    </a>
+                    <form method="post" action="{{ url_for('influencer_delete', id=influencer.id) }}"
+                          class="d-inline" onsubmit="return confirm('削除しますか？')">
+                        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <h4>{{ influencer.name }}</h4>
+                <p>
+                    <span class="badge platform-{{ influencer.platform | lower }}">{{ influencer.platform }}</span>
+                    <span class="badge status-{{ influencer.status }}">{{ influencer.status }}</span>
+                </p>
+                <table class="table table-sm table-borderless">
+                    <tr><th>アカウント</th><td>{{ influencer.account_id or '-' }}</td></tr>
+                    <tr><th>フォロワー</th><td>{{ "{:,}".format(influencer.follower_count) if influencer.follower_count else '-' }}</td></tr>
+                    <tr><th>ジャンル</th><td>{{ influencer.genre or '-' }}</td></tr>
+                    <tr><th>エリア</th><td>{{ influencer.area or '-' }}</td></tr>
+                    <tr><th>連絡先</th><td>{{ influencer.contact_info or '-' }}</td></tr>
+                    <tr><th>登録日</th><td>{{ influencer.created_at[:10] if influencer.created_at else '-' }}</td></tr>
+                </table>
+                {% if influencer.notes %}
+                <div class="mt-2">
+                    <strong>メモ:</strong>
+                    <p class="text-muted">{{ influencer.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- DM履歴 -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-chat-dots"></i> DM履歴</div>
+            <div class="card-body">
+                {% if dms %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead><tr><th>日時</th><th>方向</th><th>ステータス</th><th>内容</th></tr></thead>
+                        <tbody>
+                        {% for dm in dms %}
+                            <tr>
+                                <td class="text-nowrap">{{ dm.sent_at[:16] }}</td>
+                                <td>{{ dm.direction }}</td>
+                                <td><span class="badge bg-secondary">{{ dm.status }}</span></td>
+                                <td class="small">{{ dm.message_content[:80] }}{% if dm.message_content|length > 80 %}...{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">DM履歴がありません</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- コラボ履歴 -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-handshake"></i> コラボ履歴</div>
+            <div class="card-body">
+                {% if collabs %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead><tr><th>内容</th><th>期間</th><th>報酬</th><th>ステータス</th><th>投稿URL</th></tr></thead>
+                        <tbody>
+                        {% for c in collabs %}
+                            <tr>
+                                <td>{{ c.title }}</td>
+                                <td class="text-nowrap">{{ c.start_date or '?' }} ～ {{ c.end_date or '?' }}</td>
+                                <td>{{ c.compensation_type }} {{ c.compensation_amount }}</td>
+                                <td><span class="badge bg-info">{{ c.status }}</span></td>
+                                <td>
+                                    {% if c.post_url %}
+                                    <a href="{{ c.post_url }}" target="_blank" class="small">リンク</a>
+                                    {% else %}-{% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">コラボ履歴がありません</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

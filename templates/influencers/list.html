@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}インフルエンサー一覧 - CoolLabo{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-people"></i> インフルエンサー一覧</h2>
+    <div>
+        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+            <i class="bi bi-upload"></i> CSVインポート
+        </button>
+        <a href="{{ url_for('influencer_new') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> 新規登録
+        </a>
+    </div>
+</div>
+
+<!-- フィルター -->
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input type="text" name="search" class="form-control form-control-sm"
+               placeholder="名前・アカウントで検索" value="{{ search }}">
+    </div>
+    <div class="col-md-2">
+        <select name="platform" class="form-select form-select-sm">
+            <option value="">全プラットフォーム</option>
+            {% for p in platforms %}
+            <option value="{{ p }}" {% if sel_platform == p %}selected{% endif %}>{{ p }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="genre" class="form-select form-select-sm">
+            <option value="">全ジャンル</option>
+            {% for g in genres %}
+            <option value="{{ g }}" {% if sel_genre == g %}selected{% endif %}>{{ g }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="status" class="form-select form-select-sm">
+            <option value="">全ステータス</option>
+            {% for s in statuses %}
+            <option value="{{ s }}" {% if sel_status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-sm btn-outline-primary w-100">検索</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>名前</th>
+                <th>プラットフォーム</th>
+                <th>フォロワー数</th>
+                <th>ジャンル</th>
+                <th>エリア</th>
+                <th>ステータス</th>
+                <th>更新日</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for inf in influencers %}
+            <tr class="clickable-row" onclick="location.href='{{ url_for('influencer_detail', id=inf.id) }}'">
+                <td><strong>{{ inf.name }}</strong></td>
+                <td>
+                    <span class="badge platform-{{ inf.platform | lower }}">{{ inf.platform }}</span>
+                </td>
+                <td>{{ "{:,}".format(inf.follower_count) if inf.follower_count else '-' }}</td>
+                <td>{{ inf.genre or '-' }}</td>
+                <td>{{ inf.area or '-' }}</td>
+                <td><span class="badge status-{{ inf.status }}">{{ inf.status }}</span></td>
+                <td>{{ inf.updated_at[:10] if inf.updated_at else '-' }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="7" class="text-center text-muted">データがありません</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p class="text-muted">全{{ influencers | length }}件</p>
+
+<!-- CSVインポートモーダル -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('influencer_import') }}" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">CSVインポート</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted">
+                        CSVヘッダー: name, platform, account_id, follower_count, genre, area, contact_info, notes, status
+                    </p>
+                    <input type="file" name="csv_file" accept=".csv" class="form-control" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">インポート</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

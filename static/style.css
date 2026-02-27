@@ -1,0 +1,51 @@
+body {
+    background-color: #f5f7fa;
+    font-size: 0.9rem;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: none;
+}
+
+.card-header {
+    background-color: #fff;
+    font-weight: 600;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+.clickable-row:hover {
+    background-color: #e9f0ff;
+}
+
+/* プラットフォームバッジ */
+.badge.platform-instagram { background-color: #E1306C; }
+.badge.platform-youtube { background-color: #FF0000; }
+.badge.platform-tiktok { background-color: #000000; }
+.badge.platform-x { background-color: #1DA1F2; }
+
+/* ステータスバッジ */
+.badge.status-未連絡 { background-color: #6c757d; }
+.badge.status-DM済 { background-color: #0d6efd; }
+.badge.status-交渉中 { background-color: #fd7e14; }
+.badge.status-コラボ決定 { background-color: #198754; }
+.badge.status-完了 { background-color: #20c997; }
+.badge.status-見送り { background-color: #adb5bd; }
+
+.table th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+pre {
+    font-family: inherit;
+    font-size: 0.85rem;
+}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}ダッシュボード - CoolLabo{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-house"></i> ダッシュボード</h2>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">インフルエンサー総数</h6>
+                <h2>{{ total }}</h2>
+            </div>
+        </div>
+    </div>
+    {% for sc in status_counts %}
+    <div class="col-md-3 mt-2 mt-md-0">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title text-muted">{{ sc.status }}</h6>
+                <h3>{{ sc.cnt }}</h3>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-chat-dots"></i> 最近のDM</div>
+            <div class="card-body">
+                {% if recent_dms %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr><th>送信日</th><th>インフルエンサー</th><th>方向</th><th>ステータス</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for dm in recent_dms %}
+                            <tr>
+                                <td>{{ dm.sent_at[:16] }}</td>
+                                <td>{{ dm.influencer_name }}</td>
+                                <td>{{ dm.direction }}</td>
+                                <td><span class="badge bg-secondary">{{ dm.status }}</span></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">まだDM履歴がありません</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-handshake"></i> 進行中のコラボ</div>
+            <div class="card-body">
+                {% if active_collabs %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr><th>コラボ内容</th><th>インフルエンサー</th><th>開始日</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for c in active_collabs %}
+                            <tr>
+                                <td>{{ c.title }}</td>
+                                <td>{{ c.influencer_name }}</td>
+                                <td>{{ c.start_date or '-' }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">進行中のコラボはありません</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

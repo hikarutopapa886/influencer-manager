@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}DM管理 - CoolLabo{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-chat-dots"></i> DM管理</h2>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDmModal">
+        <i class="bi bi-plus-lg"></i> DM記録を追加
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>送信日時</th>
+                <th>インフルエンサー</th>
+                <th>プラットフォーム</th>
+                <th>方向</th>
+                <th>ステータス</th>
+                <th>内容（抜粋）</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for dm in dms %}
+            <tr>
+                <td class="text-nowrap">{{ dm.sent_at[:16] }}</td>
+                <td>{{ dm.influencer_name }}</td>
+                <td><span class="badge platform-{{ dm.platform | lower }}">{{ dm.platform }}</span></td>
+                <td>
+                    {% if dm.direction == '送信' %}
+                    <span class="text-primary"><i class="bi bi-arrow-up-right"></i> 送信</span>
+                    {% else %}
+                    <span class="text-success"><i class="bi bi-arrow-down-left"></i> 受信</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="post" action="{{ url_for('dm_update_status', id=dm.id) }}" class="d-inline">
+                        <select name="status" class="form-select form-select-sm d-inline-block w-auto"
+                                onchange="this.form.submit()">
+                            {% for s in dm_statuses %}
+                            <option value="{{ s }}" {% if dm.status == s %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
+                <td class="small">
+                    <span data-bs-toggle="tooltip" title="{{ dm.message_content }}">
+                        {{ dm.message_content[:60] }}{% if dm.message_content|length > 60 %}...{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal" data-bs-target="#viewDm{{ dm.id }}">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </td>
+            </tr>
+
+            <!-- DM内容表示モーダル -->
+            <div class="modal fade" id="viewDm{{ dm.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">DM内容 - {{ dm.influencer_name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="small text-muted">{{ dm.sent_at }} | {{ dm.direction }} | {{ dm.status }}</p>
+                            <pre class="bg-light p-3 rounded" style="white-space: pre-wrap;">{{ dm.message_content }}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <tr><td colspan="7" class="text-center text-muted">DM履歴がありません</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- DM追加モーダル -->
+<div class="modal fade" id="addDmModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('dm_add') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">DM記録を追加</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">インフルエンサー <span class="text-danger">*</span></label>
+                            <select name="influencer_id" class="form-select" required>
+                                <option value="">選択してください</option>
+                                {% for inf in influencers %}
+                                <option value="{{ inf.id }}">{{ inf.name }}（{{ inf.platform }}）</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">方向</label>
+                            <select name="direction" class="form-select">
+                                <option value="送信">送信</option>
+                                <option value="受信">受信</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">ステータス</label>
+                            <select name="status" class="form-select">
+                                {% for s in dm_statuses %}
+                                <option value="{{ s }}">{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">テンプレート選択</label>
+                        <select id="templateSelect" class="form-select form-select-sm" onchange="applyTemplate()">
+                            <option value="">テンプレートなし（自由入力）</option>
+                            {% for t in templates %}
+                            <option value="{{ loop.index0 }}">{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">メッセージ内容</label>
+                        <textarea name="message_content" id="messageContent" class="form-control" rows="10"></textarea>
+                        <div class="form-text">{name} はインフルエンサー名に自動置換されます</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">記録する</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const templates = {{ templates | tojson }};
+function applyTemplate() {
+    const sel = document.getElementById('templateSelect');
+    const ta = document.getElementById('messageContent');
+    if (sel.value !== '') {
+        ta.value = templates[parseInt(sel.value)].content;
+    }
+}
+</script>
+{% endblock %}

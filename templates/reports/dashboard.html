@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}効果測定レポート - CoolLabo{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-graph-up"></i> 効果測定レポート</h2>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addResultModal">
+        <i class="bi bi-plus-lg"></i> 測定データ追加
+    </button>
+</div>
+
+<!-- グラフ -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">エンゲージメント比較</div>
+            <div class="card-body">
+                <canvas id="engagementChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">売上インパクト比較</div>
+            <div class="card-body">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- インフルエンサー別サマリー -->
+{% if influencer_stats %}
+<div class="card mb-4">
+    <div class="card-header">インフルエンサー別 ROI サマリー</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>インフルエンサー</th>
+                        <th>プラットフォーム</th>
+                        <th>コラボ数</th>
+                        <th>総閲覧数</th>
+                        <th>総いいね</th>
+                        <th>新規来店</th>
+                        <th>売上影響</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for s in influencer_stats %}
+                    <tr>
+                        <td><strong>{{ s.name }}</strong></td>
+                        <td><span class="badge platform-{{ s.platform | lower }}">{{ s.platform }}</span></td>
+                        <td>{{ s.collab_count }}</td>
+                        <td>{{ "{:,}".format(s.total_views) }}</td>
+                        <td>{{ "{:,}".format(s.total_likes) }}</td>
+                        <td>{{ s.total_customers }}</td>
+                        <td>&yen;{{ "{:,}".format(s.total_revenue) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 測定データ一覧 -->
+<div class="card mb-4">
+    <div class="card-header">測定データ一覧</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>測定日</th>
+                        <th>コラボ</th>
+                        <th>インフルエンサー</th>
+                        <th>閲覧数</th>
+                        <th>いいね</th>
+                        <th>コメント</th>
+                        <th>新規フォロワー</th>
+                        <th>新規来店</th>
+                        <th>売上影響</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for r in results %}
+                    <tr>
+                        <td>{{ r.measured_at }}</td>
+                        <td>{{ r.collab_title }}</td>
+                        <td>{{ r.influencer_name }}</td>
+                        <td>{{ "{:,}".format(r.views) }}</td>
+                        <td>{{ "{:,}".format(r.likes) }}</td>
+                        <td>{{ "{:,}".format(r.comments) }}</td>
+                        <td>{{ "{:,}".format(r.new_followers) }}</td>
+                        <td>{{ r.new_customers }}</td>
+                        <td>&yen;{{ "{:,}".format(r.revenue_impact) }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('report_delete', id=r.id) }}"
+                                  class="d-inline" onsubmit="return confirm('削除しますか？')">
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="10" class="text-center text-muted">データがありません</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 測定データ追加モーダル -->
+<div class="modal fade" id="addResultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('report_add') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">効果測定データ追加</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">コラボレーション <span class="text-danger">*</span></label>
+                        <select name="collaboration_id" class="form-select" required>
+                            <option value="">選択してください</option>
+                            {% for c in collabs %}
+                            <option value="{{ c.id }}">{{ c.title }}（{{ c.influencer_name }}）</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">測定日</label>
+                        <input type="date" name="measured_at" class="form-control">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">閲覧数</label>
+                            <input type="number" name="views" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">いいね数</label>
+                            <input type="number" name="likes" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">コメント数</label>
+                            <input type="number" name="comments" class="form-control" value="0">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">新規フォロワー</label>
+                            <input type="number" name="new_followers" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">新規来店数</label>
+                            <input type="number" name="new_customers" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">売上影響（円）</label>
+                            <input type="number" name="revenue_impact" class="form-control" value="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">記録する</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+fetch('{{ url_for("api_report_data") }}')
+    .then(r => r.json())
+    .then(data => {
+        if (data.labels.length === 0) return;
+
+        new Chart(document.getElementById('engagementChart'), {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    { label: '閲覧数', data: data.views, backgroundColor: 'rgba(54,162,235,0.7)' },
+                    { label: 'いいね', data: data.likes, backgroundColor: 'rgba(255,99,132,0.7)' },
+                    { label: 'コメント', data: data.comments, backgroundColor: 'rgba(255,206,86,0.7)' },
+                ]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    { label: '新規来店数', data: data.customers, backgroundColor: 'rgba(75,192,192,0.7)', yAxisID: 'y' },
+                    { label: '売上影響(円)', data: data.revenue, backgroundColor: 'rgba(153,102,255,0.7)', yAxisID: 'y1' },
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, position: 'left', title: { display: true, text: '来店数' } },
+                    y1: { beginAtZero: true, position: 'right', title: { display: true, text: '売上(円)' }, grid: { drawOnChartArea: false } },
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
